@@ -3,8 +3,6 @@ title: "Relatório Afastamentos Remunerados"
 author: "Paula Macedo Barros"
 date: '2022-04-06'
 output:
-  word_document:
-    toc: yes
   html_document:
     highlight: textmate
     theme: flatly
@@ -18,11 +16,10 @@ output:
 # Contextualização
   
 O banco de dados analisado traz os resultados da base de dados referente aos Afastamentos e Licenças do Executivo Federal. As variáveis selecionadas para foram:  
-<br>
+
+  * Afastamento Missão no Exterior Com ônus e Com ônus limitado; 
   * Afastamento Programa de Treinamento para Congresso/Encontro Com Ônus e Com ônus Limitado;  
-  * Afastamento Missão no Exterior Com ônus e Com ônus limitado;  
-  * Afastamento Viagem/Serviço fora do país com ônus e com ônus limitado;  
-  * Afastamento de Aperfeiçoamento CNPQ, FINEP e CAPES fora do país com ônus.    
+  * Afastamento Viagem/Serviço fora do país com ônus e com ônus limitado.    
 
 Deseja-se **avaliar os valores médios do rendimento líquido mensal dos servidores que prestaram serviços no exterior**. Tem-se como finalidade a **obtenção do valor da hora técnica dos servidores públicos que prestam serviço no exterior**. 
 
@@ -109,24 +106,28 @@ afast_Dez_2021 <- read.csv("AFASTREM_Dez_2021.csv", header = TRUE,
 
 ```{r Merge dos Dados}
  
-afastamentos_2021 <- rbind(afast_Jan_2021, afast_Fev_2021,
+afastamentos_2021_total <- rbind(afast_Jan_2021, afast_Fev_2021, 
                            afast_Mar_2021, afast_Abr_2021,
                            afast_Mai_2021, afast_Jun_2021,
                            afast_Jul_2021, afast_Ago_2021,
-                           afast_Set_2021, afast_Out_2021,
+                           afast_Set_2021, afast_Out_2021, 
                            afast_Nov_2021, afast_Dez_2021)
 ```
 
 **Analisar Banco de Dados bruto:**  
 ```{r Glimpse Banco de Dados}
-glimpse(afastamentos_2021)
+glimpse(afastamentos_2021_total)
+```
+**Eliminando as duas primeiras colunas:**
+
+```{r Eliminar as duas primeiras colunas e última}
+afastamentos_2021 <- afastamentos_2021_total %>% 
+  select(-c(Nome, CPF, X))
 ```
 
 **Eliminando os valores faltantes do data frame:**      
 
-```{r Manipulação Banco de Dados, echo=TRUE}
-afastamentos_2021$X <- NULL
-
+```{r Observando Valores Faltantes, echo=TRUE}
 afastamentos_2021_1 <- afastamentos_2021[complete.cases(afastamentos_2021),]
 
 sapply(afastamentos_2021_1, function(x) sum (is.na(x)))
@@ -137,14 +138,14 @@ sapply(afastamentos_2021_1, function(x) sum (is.na(x)))
 afastamentos_2021_1[afastamentos_2021_1==0] <- NA
 
 afastamentos_2021_2 <- afastamentos_2021_1[complete.cases(
-  afastamentos_2021_1),]
+  afastamentos_2021_1), ]
 ``` 
   
 **Adicionar coluna do ´RENDIMENTO POR HORA´ (Remuneração por Hora Relativa):**       
 
 ```{r Adicionando Coluna Rendimento por Hora}
 afastamentos_2021_3 <- afastamentos_2021_2 |> 
-  mutate(Rendimento_Líquido_Hora = ((Valor_rendimento_liquido/23)/8))
+  mutate(Rendimento_Liquido_Hora = ((Valor_rendimento_liquido/21)/8))
 ```
 
 **Modificando Ano Mes Incio Afastamento e Ano Mês Referência para o formato de data padrão 
@@ -164,24 +165,30 @@ afastamentos_2021_3 <- afastamentos_2021_3 %>%
          Mes_inicio_afastamento = format(Ano_Mes_inicio_afastamento, "%m"))
 ```
 
-**Analisar os tipos de variáveis do data frame criado:**    
 
-```{r Análisar os tipos de variáveis}
-glimpse(afastamentos_2021_3) 
+**Filtrar as observações não necessárias para a análise:** 
+```{r Filtrar Observações}
+
+afastamentos_2021_4 <- filter(afastamentos_2021_3, 
+                              Descricao_do_afastamento != "Afas. Estudo Exterior C/Ônus Limitado - EST                 ",
+                              Descricao_do_afastamento != "AFAS. ESTUDO EXTERIOR C/ONUS - EST                          ",
+                              Descricao_do_afastamento != "Afas. Est/Prog.Trein.(Congr-Encon) País C/Ônus Limit - EST  ",
+                              Descricao_do_afastamento != "Afas. Est/Prog.Trein.(Cong-Enc-Semin) País C/Ônus - EST     ", 
+                              Descricao_do_afastamento != "Afas. Aperfeiç. CNPq, FINEP e CAPES Fora País C/Ônus - EST  ")
 ```
 
-<br>
 
 **Visualização sistemática das 5 primeiras linhas do banco de dados:**   
 
 ```{r  Tabela 1 - Visualização das Primeiras Linhas do Banco de Dados, echo=FALSE}
-knitr::kable(head(afastamentos_2021_3, 5), col.names = c("Nome", "CPF", "Descrição do Cargo", "Nome do Órgão de Origem", "UF", "Cidade da Residência", "Nível da Escolaridade", "Início do Afastamento", "Ano/Mês Referência", "Valor do Rendimento Líquido", "Descrição do Afastamento", "Rendimento Líquido por Hora", "Ano Início Afastamento", "Mês Início Afastamento")) %>%
+knitr::kable(head(afastamentos_2021_4, 5), col.names = c("Descrição do Cargo", "Nome do Órgão de Origem", "UF", "Cidade da Residência", "Nível da Escolaridade", "Início do Afastamento", "Ano/Mês Referência", "Valor do Rendimento Líquido", "Descrição do Afastamento", "Rendimento Líquido por Hora", "Ano Início Afastamento", "Mês Início Afastamento")) %>%
   kable_styling(full_width = F, fixed_thead = T, font_size = 12,  bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 
 
 <br>
-O banco contém `r nrow(afastamentos_2021_3)` observações. 
+
+O banco de dados original continha `r nrow(afastamentos_2021)` observações, já o banco de dados obtido através da manipulação contém `r nrow(afastamentos_2021_4)`
 
 
 ## Estatística Descritiva 
@@ -190,15 +197,17 @@ O banco contém `r nrow(afastamentos_2021_3)` observações.
 
 ### Tabelas de Frequência   
 #### Tabela de Frequência por Órgão de Origem
-A tabela de frequência a seguir demonstra os resultados obtidos através do agrupamento dos Órgãos de Origem dos servidores que foram afastados no ano de 2021. Consegue-se, portanto, verificar a quantidade de afastamentos por órgão, bem como os gastos totais em afastamentos realizados por cada um desses órgãos. Através dos dados anteriormente citados, foi possível calcular o Valor do Rendimento Líquido Médio, ou seja, o valor médio gasto por cada servidor de determinado órgão.  
+Nesta secção serão representadas duas tabelas: a tabela de frequências composta por todos os órgãos; e a tabela do valor sugerido da hora técnica para todos os órgãos.  
 
+A tabela de frequência a seguir demonstra os resultados obtidos através do agrupamento dos Órgãos de Origem dos servidores afastados no ano de 2021. Consegue-se, portanto, verificar a quantidade de afastamentos por órgão, bem como a hora técnica do servidor para cada um desses órgãos, calculada através do Valor da Hora Técnica esclarecido na secção anterior. 
 <br>  
 
-```{r Tabela 01 - Frequência por Nome do Órgão de Origem, echo=FALSE}
-tabela_01 <- afastamentos_2021_3 |> 
+```{r Tabela - Frequência por Nome do Órgão de Origem, eval=FALSE, include=FALSE}
+tabela <- afastamentos_2021_4 |> 
   group_by(Nome_orgao_de_origem) |> 
   summarize(contagem = n(), valor_total = sum(Valor_rendimento_liquido), 
-            valor_rendimento_medio = valor_total/contagem) |> 
+            valor_rendimento_medio = (valor_total/contagem)
+            ) |> 
   arrange(desc(valor_total)) |> 
   gt(rowname_col = "Nome_orgao_de_origem") |>  
   tab_header(
@@ -209,7 +218,7 @@ tabela_01 <- afastamentos_2021_3 |>
      Nome_orgao_de_origem = md("**Nome do Órgão de Origem**"), 
      contagem = md("**Quantidade de Afastamentos por Órgão**"),
      valor_total = md("**Gasto Total com Afastamentos (R$)**"),
-     valor_rendimento_medio = md("**Valor Médio do Rendimento Líquido por Órgão (R$)**")
+     valor_rendimento_medio = md("**Gasto Médio de Rendimento Líquido por Órgão (R$)**")
   ) |>  
   opt_align_table_header(align = "left") |> 
   fmt_number(columns = 3:4) |> 
@@ -224,19 +233,10 @@ tabela_01 <- afastamentos_2021_3 |>
     footnote = "O maior gasto com afastamentos para o exterior foi executado pelo
     Ministério da Economia.",
     locations = cells_stub(rows = 1)
-  ) |> 
-  tab_footnote(
-  footnote = "O menor gasto com afastamentos para o exterior foi executado pelo
-  Amazonia Azul Tecnologias de Defesa SA.",
-  locations = cells_stub(rows = 163) 
-  ) |> 
+  )  |> 
   tab_footnote(
     footnote = "O órgão que mais realizou afastamentos no ano de 2021 foi a Universidade Federal do Rio de Janeiro, com um total de 827 afastamentos",
     locations = cells_stub(rows = 2)	
-  ) |> 
-  tab_footnote(
-  footnote = "O IPEA realizou 69 afastamentos no ano de 2021, totalizando um gasto de R$2,109,511.43, e obteu uma média de R$30,572.63 por cada servidor afastado",
-  locations = cells_stub(rows = "INSTITUTO DE PESQUISA ECONOMICA APLICADA") 
   ) |> 
   data_color(
     columns = valor_rendimento_medio,
@@ -256,10 +256,249 @@ tabela_01 <- afastamentos_2021_3 |>
     align = "center",
     columns = everything()
 )
+
+tabela
+```
+
+```{r Tabela 01 - Valor da Hora Técnica por Órgão de Origem, echo=FALSE}
+tabela_01 <- afastamentos_2021_4 |> 
+  group_by(Nome_orgao_de_origem) |> 
+  summarize(contagem = n(),
+    valor_medio_hora = ((sum(Rendimento_Liquido_Hora))/contagem)
+            ) |> 
+  arrange(desc(contagem)) |> 
+  gt(rowname_col = "Nome") |>  
+  tab_header(
+    title = md("**Tabela 01 - Valor da Hora Técnica por Órgão (R$)**"),
+    subtitle = md("**Ano: 2021**")
+  ) |> 
+  cols_label(
+     Nome_orgao_de_origem = md("**Nome do Órgão de Origem**"), 
+     contagem = md("**Quantidade de Afastamentos por Órgão**"),
+     valor_medio_hora = md("**Valor da Hora Técnica por Órgão**")
+  ) |> 
+  opt_align_table_header(align = "left") |> 
+  fmt_number(columns = 3) |> 
+  cols_width(
+    Nome_orgao_de_origem~px(250),
+    contagem~px(150),
+    valor_medio_hora~px(200)
+  ) |> 
+  tab_source_note(source_note = md("**Fonte: Elaboração Própria**")
+  ) |>
+  data_color(
+    columns = valor_medio_hora,
+    colors = scales::col_numeric(
+      palette = c("azure","cornflowerblue","darkblue"),
+      domain = c(min(valor_medio_hora),	max(valor_medio_hora))
+    )
+  ) |> 
+  tab_stubhead(
+    label = md ("**Nome Órgão<br>de Origem**")
+  ) |> 
+  opt_table_font(
+    font = google_font("Times New Roman"), 
+    weight = 600 
+  ) |> 
+  cols_align(
+    align = "center",
+    columns = everything()
+)
+
 tabela_01
 ```
-  
+
 <br>  
+
+A tabela abaixo possui como propósito sugerir um **Valor Médio da Hora Técnica para todos os Órgãos que realizaram afastamentos no ano de 2021**. Esse valor equivale a média da variável Rendimento Líquido por Hora de todos os servidores afastados, essa sendo calculada através da remuneração por hora relativa.  
+
+<br>
+
+```{r Tabela 02 - Valor Geral por Órgão de Origem - Todos os Órgãos, echo=FALSE}
+
+tabela_02 <- afastamentos_2021_4 |> 
+  summarize(instituicao = "Órgãos que Realizaram Afastamentos em 2021",
+    valor_medio_hora = ((sum(Rendimento_Liquido_Hora))/n())
+            ) |> 
+  gt(rowname_col = "Nome") |> 
+  tab_header(
+    title = md("**Tabela 02 - Valor da Hora Técnica Sugerido para todos os Órgãos**"),
+    subtitle = md("**Ano: 2021**")
+  ) |> 
+  cols_label(
+     instituicao = md(""), 
+     valor_medio_hora = md("**Valor da Hora Técnica Médio por Órgão (R$)**")
+  ) |> 
+  opt_align_table_header(align = "left") |> 
+  fmt_number(columns = 2) |> 
+  cols_width(
+    instituicao~px(250),
+    valor_medio_hora~px(200)
+  ) |> 
+  tab_source_note(source_note = md("**Fonte: Elaboração Própria**")
+  ) |>
+  data_color(
+    columns = valor_medio_hora,
+    colors = "blue"
+  ) |> 
+  tab_stubhead(
+    label = md ("**Nome da Instituição**")
+  ) |> 
+  opt_table_font(
+    font = google_font("Times New Roman"), 
+    weight = 600 
+  ) |> 
+  cols_align(
+    align = "center",
+    columns = everything()
+)
+
+tabela_02
+```
+
+```{r Valor da Hora Técnica por Descrição de Cargo Emprego, echo=FALSE}
+tabela_02 <- afastamentos_2021_4 |> 
+  group_by(Descricao_do_cargo.emprego) |> 
+  summarize(contagem = n(),
+    valor_medio_hora = ((sum(Rendimento_Liquido_Hora))/contagem)
+            ) |> 
+  arrange(desc(contagem)) |> 
+  gt(rowname_col = "Nome") |> 
+  tab_header(
+    title = md("**Tabela 02 - Valor da Hora Técnica por Descrição do Cargo**"),
+    subtitle = md("**Ano: 2021**")
+  ) |> 
+  cols_label(
+     Descricao_do_cargo.emprego = md("**Descrição do Cargo**"), 
+     contagem = md("**Quantidade de Afastamentos por Cargo**"),
+     valor_medio_hora = md("**Valor da Hora Técnica por Cargo**")
+  ) |> 
+  opt_align_table_header(align = "left") |> 
+  fmt_number(columns = 3) |> 
+  cols_width(
+    Descricao_do_cargo.emprego~px(250),
+    contagem~px(150),
+    valor_medio_hora~px(200)
+  ) |> 
+  tab_source_note(source_note = md("**Fonte: Elaboração Própria**")
+  ) |>
+  data_color(
+    columns = valor_medio_hora,
+    colors = scales::col_numeric(
+      palette = c("azure","cornflowerblue","darkblue"),
+      domain = c(min(valor_medio_hora),	max(valor_medio_hora))
+    )
+  ) |> 
+  tab_stubhead(
+    label = md ("**Descrição do Cargo**")
+  ) |> 
+  opt_table_font(
+    font = google_font("Times New Roman"), 
+    weight = 600 
+  ) |> 
+  cols_align(
+    align = "center",
+    columns = everything()
+)
+
+tabela_02
+```
+
+
+```{r Valor da Hora Técnica Universidades Federais e Institutos Federais, echo=FALSE}
+afastamentos_universidades <- afastamentos_2021_4 %>%
+filter(str_detect(Nome_orgao_de_origem, "UNIV|INST"))
+
+tabela_03 <- afastamentos_universidades |> 
+  group_by(Nome_orgao_de_origem) |> 
+  summarize(contagem = n(),
+    valor_medio_hora = ((sum(Rendimento_Liquido_Hora))/contagem)
+            ) |> 
+  arrange(desc(contagem)) |> 
+  gt(rowname_col = "Nome") |> 
+  tab_header(
+    title = md("**Tabela 03 - Valor da Hora Técnica por Instituição**"),
+    subtitle = md("**Ano: 2021**")
+  ) |> 
+  cols_label(
+     Nome_orgao_de_origem = md("**Nome da Instituição**"), 
+     contagem = md("**Quantidade de Afastamentos por Cargo**"),
+     valor_medio_hora = md("**Valor da Hora Técnica por Instituição (R$)**")
+  ) |> 
+  opt_align_table_header(align = "left") |> 
+  fmt_number(columns = 3) |> 
+  cols_width(
+    Nome_orgao_de_origem~px(250),
+    contagem~px(250),
+    valor_medio_hora~px(300)
+  ) |> 
+  tab_source_note(source_note = md("**Fonte: Elaboração Própria**")
+  ) |>
+  data_color(
+    columns = valor_medio_hora,
+    colors = scales::col_numeric(
+      palette = c("azure","cornflowerblue","darkblue"),
+      domain = c(min(valor_medio_hora),	max(valor_medio_hora))
+    )
+  ) |> 
+  tab_stubhead(
+    label = md ("**Nome da Instituição**")
+  ) |> 
+  opt_table_font(
+    font = google_font("Times New Roman"), 
+    weight = 600 
+  ) |> 
+  cols_align(
+    align = "center",
+    columns = everything()
+)
+tabela_03
+```
+
+<br>
+ 
+A tabela abaixo demonstra o valor sugerido para as Universidades Federais, bem como para os Institutos Federais. 
+```{r Valor Geral por Instituição - Universidades Federais e Institutos Federais, echo=FALSE}
+
+tabela_04 <- afastamentos_universidades |> 
+  summarize(instituicao = "Universidades e Institutos",
+    valor_medio_hora = ((sum(Rendimento_Liquido_Hora))/n())
+            ) |> 
+  gt(rowname_col = "Nome") |> 
+  tab_header(
+    title = md("**Tabela 04 - Valor da Hora Técnica Sugerido para as Universidades e Institutos Federais**"),
+    subtitle = md("**Ano: 2021**")
+  ) |> 
+  cols_label(
+     instituicao = md(""), 
+     valor_medio_hora = md("**Valor da Hora Técnica Médio por Instituição (R$)**")
+  ) |> 
+  opt_align_table_header(align = "left") |> 
+  fmt_number(columns = 2) |> 
+  cols_width(
+    instituicao~px(250),
+    valor_medio_hora~px(200)
+  ) |> 
+  tab_source_note(source_note = md("**Fonte: Elaboração Própria**")
+  ) |>
+  data_color(
+    columns = valor_medio_hora,
+    colors = "blue"
+  ) |> 
+  tab_stubhead(
+    label = md ("**Instituições**")
+  ) |> 
+  opt_table_font(
+    font = google_font("Times New Roman"), 
+    weight = 600 
+  ) |> 
+  cols_align(
+    align = "center",
+    columns = everything()
+)
+
+tabela_04
+```
 
 #### Tabela de Frequência por Descrição do Afastamento
 A tabela de frequência a seguir apresenta os resultados obtidos através do agrupamento pela Descrição de Afastamento dos servidores que foram afastados no ano de 2021. Através desta análise, obtem-se a quantidade realizada para cada tipo de afastamento, seguido dos gastos totais para cada descrição de afastamento. Dessa forma, torna-se possível calcular o Valor do Rendimento Líquido Médio, ou seja, o valor médio gasto para determinado tipo de afastamento.  
@@ -267,7 +506,7 @@ A tabela de frequência a seguir apresenta os resultados obtidos através do agr
 <br>
  
 ```{r Tabela 02 - Frequência por Descrição do Afastamento, echo=FALSE}
-tabela_02 <- afastamentos_2021_3 |> 
+tabela_02 <- afastamentos_2021_4 |> 
   group_by(Descricao_do_afastamento) |> 
   summarize(contagem = n(), valor_total = sum(Valor_rendimento_liquido), 
             valor_rendimento_medio = valor_total/contagem) |> 
@@ -317,6 +556,17 @@ tabela_02 <- afastamentos_2021_3 |>
 tabela_02
 ```
 
+A tabela acima também pode ser representada pelo gráfico de pizzas a seguir. 
+
+```{r Gráfico de Pizza}
+PieChart(Descricao_do_afastamento, data = afastamentos_2021_4,
+         fill = "blues",
+         hole_fill = "#B7E3E0",
+         main = "Gráfico de Setores", 
+         values_color = "black",
+         values_size = 0.75)
+```
+
 <br>
 
 #### Tabela de Frequência por Unidade Federativa
@@ -325,7 +575,7 @@ A tabela de frequência a seguir explicita os resultados obtidos através do agr
 <br> 
 
 ```{r Tabela 03 - Frequência por Unidade Federativa, echo=FALSE}
-tabela_03 <- afastamentos_2021_3 |> 
+tabela_03 <- afastamentos_2021_4 |> 
   group_by(UF_da_UPAG_de_vinculacao) |> 
   summarize(contagem = n(), valor_total = sum(Valor_rendimento_liquido), 
             valor_rendimento_medio = valor_total/contagem) |> 
@@ -392,17 +642,17 @@ Onde:
 #### Medidas de Tendência Central 
 
 
-```{r Tabela Estatística Descritiva do Valor do Rendimento Líquido - Medidas de Posição Central, include=FALSE}
+```{r Tabela Estatística Descritiva do Valor do Rendimento Líquido - Medidas de Posição Central, eval=FALSE, include=FALSE}
 tabela_04 <- data.frame(
   variavel = c("Valor do Rendimento Liquido Total", "Valor do Rendimento Liquido por Hora"),
-  min = c(min(afastamentos_2021_3$Valor_rendimento_liquido), min(afastamentos_2021_3$Rendimento_Líquido_Hora)),
-  max = c(max(afastamentos_2021_3$Valor_rendimento_liquido), max(afastamentos_2021_3$Rendimento_Líquido_Hora)),
-  media = c(mean(afastamentos_2021_3$Valor_rendimento_liquido), mean(afastamentos_2021_3$Rendimento_Líquido_Hora)),
-  mediana = c(median(afastamentos_2021_3$Valor_rendimento_liquido), median(afastamentos_2021_3$Rendimento_Líquido_Hora))
+  min = c(min(afastamentos_2021_4$Valor_rendimento_liquido), min(afastamentos_2021_4$Rendimento_Líquido_Hora)),
+  max = c(max(afastamentos_2021_4$Valor_rendimento_liquido), max(afastamentos_2021_4$Rendimento_Líquido_Hora)),
+  media = c(mean(afastamentos_2021_4$Valor_rendimento_liquido), mean(afastamentos_2021_4$Rendimento_Líquido_Hora)),
+  mediana = c(median(afastamentos_2021_4$Valor_rendimento_liquido), median(afastamentos_2021_4$Rendimento_Líquido_Hora))
 )
 ```  
 
-```{r Output Estatística Descritiva do Valor do Rendimento Líquido, echo=FALSE}
+```{r Output Estatística Descritiva do Valor do Rendimento Líquido, eval=FALSE, include=FALSE}
 kable(
   tabela_04,
   col.names = c("Variável", "Mínimo", "Máximo", "Média", "Mediana"), 
@@ -414,7 +664,7 @@ kable(
 ```
 
 #### Medidas de Dispersão   
-```{r Tabela Estatística Descritiva do Valor do Rendimento Líquido - Medidas de Dispersão, include=FALSE}
+```{r Tabela Estatística Descritiva do Valor do Rendimento Líquido - Medidas de Dispersão, eval=FALSE, include=FALSE}
 cv <- function(x){
     coef<-sd(x)/mean(x)*100
     return(coef)
@@ -422,18 +672,18 @@ cv <- function(x){
 
 tabela_05 <- data.frame(
   variavel = c("Valor do Rendimento Liquido Total", "Valor do Rendimento Liquido por Hora"),
-  sd = c(sd(afastamentos_2021_3$Valor_rendimento_liquido), sd(afastamentos_2021_3$Rendimento_Líquido_Hora)),
-  var = c(cv(afastamentos_2021_3$Valor_rendimento_liquido), cv(afastamentos_2021_3$Rendimento_Líquido_Hora)),
-  p.25 = c(quantile(afastamentos_2021_3$Valor_rendimento_liquido, probs = 0.25), quantile(afastamentos_2021_3$Rendimento_Líquido_Hora, probs = 0.25)), 
-  p.75 = c(quantile(afastamentos_2021_3$Valor_rendimento_liquido, probs = 0.75), quantile(afastamentos_2021_3$Rendimento_Líquido_Hora, probs = 0.75)),
-  skewness = c(skewness(afastamentos_2021_3$Valor_rendimento_liquido), skewness(afastamentos_2021_3$Rendimento_Líquido_Hora)),
-  kurtosis = c(kurtosis(afastamentos_2021_3$Valor_rendimento_liquido), kurtosis(afastamentos_2021_3$Rendimento_Líquido_Hora))
+  sd = c(sd(afastamentos_2021_4$Valor_rendimento_liquido), sd(afastamentos_2021_4$Rendimento_Líquido_Hora)),
+  var = c(cv(afastamentos_2021_4$Valor_rendimento_liquido), cv(afastamentos_2021_4$Rendimento_Líquido_Hora)),
+  p.25 = c(quantile(afastamentos_2021_4$Valor_rendimento_liquido, probs = 0.25), quantile(afastamentos_2021_4$Rendimento_Líquido_Hora, probs = 0.25)), 
+  p.75 = c(quantile(afastamentos_2021_4$Valor_rendimento_liquido, probs = 0.75), quantile(afastamentos_2021_4$Rendimento_Líquido_Hora, probs = 0.75)),
+  skewness = c(skewness(afastamentos_2021_4$Valor_rendimento_liquido), skewness(afastamentos_2021_4$Rendimento_Líquido_Hora)),
+  kurtosis = c(kurtosis(afastamentos_2021_4$Valor_rendimento_liquido), kurtosis(afastamentos_2021_4$Rendimento_Líquido_Hora))
   ) 
 
 
 ```
 
-```{r Output Tabela Estatística Descritiva do Valor do Rendimento Líquido - Medidas de Dispersão, echo=FALSE}
+```{r Output Tabela Estatística Descritiva do Valor do Rendimento Líquido - Medidas de Dispersão, eval=FALSE, include=FALSE}
 kable(
   tabela_05,
   col.names = c("Variável", "Desvio Padrão", "Variância", "1º Quartil", "3º Quartil", "Skewness", "Kurtosis"), 
@@ -454,9 +704,9 @@ O histograma a seguir demonstra a distribuição de frequências dos valores ref
 <br>
 
 ```{r Histograma Valor do Rendimento Líquido, echo=FALSE}
-afastamentos_2021_3 |> 
+afastamentos_2021_4 |> 
   ggplot(aes(x = Valor_rendimento_liquido)) +
-  geom_histogram(binwidth = 2000,
+  geom_histogram(binwidth = 5000,
                  colour = "black",
                  aes(y = ..density.., fill = ..count..), 
                  alpha = 0.9
@@ -481,7 +731,7 @@ afastamentos_2021_3 |>
 #### Boxplot 
 
 ```{r BoxPlot Valor do Rendimento Líquido, echo=FALSE}
-afastamentos_2021_3 |> 
+afastamentos_2021_4 |> 
   ggplot(aes(x = "Afastamentos 2021", y = Valor_rendimento_liquido, fill = "Valor_rendimento_liquido")) +
   geom_boxplot(
     show.legend = F,
