@@ -31,9 +31,9 @@ library(readxl)
 
 
 #Abrir Dados  
-#afastamentos_2021 <- read_excel("base_afastamentos_2021.xlsx")
+afastamentos_2021 <- read_excel("base_afastamentos_2021.xlsx")
 
-afastamentos_2021 <- read_excel("C:/Users/Paula/Dropbox/PC (3)/Documents/COBRADI/Bases/base_afastamentos_2021.xlsx")
+#afastamentos_2021 <- read_excel("C:/Users/Paula/Dropbox/PC (3)/Documents/COBRADI/Bases/base_afastamentos_2021.xlsx")
 
 #User Interface 
 ui <- fluidPage(theme = paste0("sdcwww/", getShinyOption(".guitheme")),
