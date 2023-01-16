@@ -31,15 +31,18 @@ library(readxl)
 
 
 #Abrir Dados  
-afastamentos_2021 <- read_excel("base_afastamentos_2021.xlsx")
+#afastamentos_2021 <- read_excel("base_afastamentos_2021.xlsx")
+
+afastamentos_2021 <- read_excel("C:/Users/Paula/Dropbox/PC (3)/Documents/COBRADI/Bases/base_afastamentos_2021.xlsx")
 
 #User Interface 
-ui <- dashboardPage(
+ui <- fluidPage(theme = paste0("sdcwww/", getShinyOption(".guitheme")),
+  dashboardPage(
   ##Barra de cima 
   dashboardHeader(title = "Cooperação Brasileira Para o Desenvolvimento Internacional (COBRADI)", 
                   titleWidth = 700,
                   tags$li(class = "dropdown",
-                          tags$a(href = "https://www.ipea.gov.br/portal/index.php?option=com_content&view=article&id=39285&Itemid=343",
+                          tags$a(href = "https://www.ipea.gov.br/portal/images/cobradi/topo_site_cobradi_portugues_02.jpg",
                                  icon("globe", lib = "glyphicon"),
                                  "Site COBRADI", 
                                  target = "_blank"))
@@ -73,7 +76,7 @@ ui <- dashboardPage(
               tabBox(id = "t1", width = 12,
                      tabPanel("Sobre",
                               icon = icon("address-card"),
-                              fluidPage( 
+                              fluidPage(theme = paste0("sdcwww/", getShinyOption(".guitheme")), 
                               fluidRow(
                                 column(width = 12, align = "center", 
                                        tags$img(src = "https://www.ipea.gov.br/portal/images/topo_site_cobradi.jpg",
@@ -100,8 +103,10 @@ ui <- dashboardPage(
                      ),
                      
                      tabPanel(title = "Base de Dados",
+                              tags$style(HTML("
+                           .tabbable > .nav > li > a {background-color: #015227; color: white}")),
                               icon = icon("table"),
-                              fluidPage(
+                              fluidPage(theme = paste0("sdcwww/", getShinyOption(".guitheme")),
                                 titlePanel("Base de Dados Afastamentos (2021)"),
                                 
                                 # Create a new Row in the UI for selectInputs
@@ -138,7 +143,7 @@ ui <- dashboardPage(
                     
                      tabPanel(title = "Estrutura dos Dados",
                               icon = icon("cubes"),
-                              fluidPage(
+                              fluidPage(theme = paste0("sdcwww/", getShinyOption(".guitheme")),
                                 titlePanel(""),
                                 
                                 # Create a new Row in the UI for selectInputs
@@ -168,7 +173,7 @@ ui <- dashboardPage(
                      tabPanel(title = "Valor da Hora Técnica",
                               icon = icon("dollar"),
                               value = "trends",
-                              fluidPage(
+                              fluidPage(theme = paste0("sdcwww/", getShinyOption(".guitheme")),
                                 fluidRow(
                                   column(width = 12,
                                          box(title = "Filtros", width = "100%",
@@ -294,7 +299,11 @@ ui <- dashboardPage(
                                          [Respondemos em até 24h]."))
     )
   )
+  ), 
+  tags$body(tags$style(HTML('*{box-sizing: border-box; font-family: "Montserrat", sans-serif};'))),
+  textOutput("keep_alive")
 )
+
 
 #-------------------------------------------------------------------------------#
 
